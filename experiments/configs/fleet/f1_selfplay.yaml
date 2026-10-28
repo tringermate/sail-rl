@@ -1,0 +1,43 @@
+# F1: fleet racing, 4 boats, self-play. All four boats are sailed by one shared network that learns (as for the
+# 5-boat start policy), starting from the bundled solo racer (rl-racer: kickstarted, 2048 envs on a GPU).
+# Decisions (2026-10-26): self-play first; reward = place + finish + the solo shaping and time cost; RRS 16 on;
+# steady wind. Baseline (runs/tournament/f0_baseline, 256 races): digital racers mean place 1.59, rl-racer
+# 2.62-2.99, finishing only 75-81% with ~3 penalties per race.
+name: f1_selfplay
+env: race
+init_from: ../sail-env/sail_env/pretrained/racer
+wandb: true
+wandb_project: sailstart
+gif_every: 150
+start_bank:
+  num: 4096
+  policy: fleet              # the bundled fleet start policy sails the start for all 4 boats
+  sampler: uniform
+  seed: 4321
+env_params:
+  fleet_size: 4
+  rrs16: true                # a right-of-way boat that changes course must give room
+  race_legs: 4
+  course_beat_length: 400.0
+  gate_offset: 60.0
+  race_finish_reward: 1.0
+  race_rank_reward: 2.0      # zero-sum by finishing order: winner +1 ... last -1 (the race preset's value)
+  race_time_cost: 0.0016667  # as solo: speed still pays every second
+  race_shaping: 0.1
+  shaping_gamma: 1.0
+ppo:
+  num_envs: 2048             # x 4 boats: 8192 boat-transitions per env step
+  num_steps: 64
+  total_timesteps: 200000000
+  lr: 0.0003
+  gamma: 0.999
+  gae_lambda: 0.95
+  update_epochs: 4
+  num_minibatches: 32
+  ent_coef: 0.01
+  ent_coef_final: 0.002
+  hidden: 128
+  stagger_steps: 700
+  num_seeds: 3
+  updates_per_chunk: 10
+  kick_coef: 0.0

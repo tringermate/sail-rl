@@ -1,0 +1,26 @@
+# Phase 2: solo timing task, sparse terminal reward (+1 success, -1 OCS), uniform start sampling.
+name: solo_sparse
+env: solo_start
+wandb: true
+gif_every: 25          # updates between GIFs of seed 0's policy (same start scenario each time)
+env_params: {}         # EnvParams defaults (square line, 50-250 m below it at T-60)
+ppo:
+  num_envs: 512        # large batches: ~2x faster on CPU than 64 envs (measured)
+  num_steps: 32
+  total_timesteps: 5000000
+  lr: 3.0e-4
+  anneal_lr: true
+  update_epochs: 4
+  num_minibatches: 4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_eps: 0.2
+  ent_coef: 0.01
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  normalize_advantages: true
+  clip_value_loss: true
+  hidden: 64
+  num_seeds: 5
+  updates_per_chunk: 10
+  stagger_steps: 70    # desynchronise the 70-step episodes across envs

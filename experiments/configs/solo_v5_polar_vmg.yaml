@@ -1,0 +1,45 @@
+# Phase 2 run G: run F + longer (20M steps), with upwind efficiency scored per second after the
+# start (VMG / polar's best VMG, capped at 1) instead of height at T+10, which rewarded shooting
+# head to wind. Previous header:
+# Phase 2 run F + longer training (20M steps per seed). Run F: run D + on the line at the gun: bow 0-3 m below the line, between the ends,
+# when the gun goes (staged from 30 m down to 3 m). Plus run D's full rules: cross within 3 s at
+# >= 90% speed, starboard, OCS penalty, height bonus.
+name: solo_v5_polar_vmg
+env: solo_start
+wandb: true
+gif_every: 100         # updates between GIFs of seed 0's policy (same start scenario each time)
+env_params:
+  random_start_time: true
+  port_penalty: 1.0     # full rules: a port-tack start earns no success reward
+  upwind_bonus: 0.5     # up to +0.5 at T+10 for sailing at the polar's best VMG after the start
+  gun_distance_max: 3.0 # on the line at the gun: bow 0-3 m below the line, between the ends
+staged_rules:          # easy values; the full values are the env_params above
+  easy_until: 0.2      # fraction of training with the easy rules
+  full_from: 0.7       # full rules from here on (linear tightening in between)
+  easy:
+    success_window: 10.0     # any legal crossing T+0..T+10 counts
+    success_speed_frac: 0.0  # at any speed
+    ocs_penalty: 0.0         # no penalty for being over at first
+    port_penalty: 0.0        # any tack counts at first
+    gun_distance_max: 30.0   # within 30 m of the line at the gun at first
+    speed_bonus: 0.02        # per second of full VMG towards the line, T-10..T+3; fades to 0
+ppo:
+  num_envs: 512        # large batches: ~2x faster on CPU than 64 envs (measured)
+  num_steps: 32
+  total_timesteps: 20000000
+  lr: 3.0e-4
+  anneal_lr: true
+  update_epochs: 4
+  num_minibatches: 4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_eps: 0.2
+  ent_coef: 0.01
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  normalize_advantages: true
+  clip_value_loss: true
+  hidden: 64
+  num_seeds: 5
+  updates_per_chunk: 10
+  stagger_steps: 70    # desynchronise the 70-step episodes across envs

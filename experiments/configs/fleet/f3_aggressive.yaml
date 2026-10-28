@@ -1,0 +1,63 @@
+# F3: fleet racing that should pay for racing each other (decisions 2026-10-27 after F2 tied the digital racer but
+# sailed in a procession: 1.2 overtakes per race vs the digital racers' 6.5).
+#   - only the result counts, not the time: no per-second cost at all (F2 phased it out); progress shaping
+#     (potential-based, does not change the best policy) still phased out between 10% and 50% of training.
+#   - contacts cost 0.25 instead of 2.0 (2.0 was the whole spread from first to last place, so staying away
+#     from other boats was worth more than any pass); the rules still cost a penalty turn, and an unserved
+#     penalty at the end still costs foul_penalty 1.0.
+#   - stronger wind shadow: wind right behind a boat down to 60% (was 75%), over 8 boat lengths (was 6), so
+#     sailing in another boat's line costs more and splitting pays.
+#   - a more varied opponent pool: in 75% of races boats 2-3 come from the pool, each drawn separately from
+#     4 snapshots of the policy, the digital racer and the three F2 seeds.
+# From F2 (seeds map 1:1). Evaluate with the same env overrides (shadow, rrs16, current cap).
+name: f3_aggressive
+env: race-weather
+init_from: runs/train/f2_weather_league_20261026-170806
+wandb: true
+wandb_project: sailstart
+gif_every: 150
+start_bank:
+  num: 4096
+  policy: fleet
+  sampler: uniform
+  seed: 4321
+env_params:
+  fleet_size: 4
+  rrs16: true
+  current_max_frac: 0.06     # race committee
+  shadow_min_factor: 0.6     # was 0.75
+  shadow_length_bl: 8.0      # was 6
+  contact_cost: 0.25         # was 2.0
+  contact_cost_row: 0.1      # was 0.5
+  race_legs: 4
+  course_beat_length: 400.0
+  gate_offset: 60.0
+  race_finish_reward: 1.0
+  race_rank_reward: 2.0      # zero-sum by place: winner +1 ... last -1
+  race_time_cost: 0.0        # time does not matter, only the place
+  race_shaping: 0.1
+  shaping_gamma: 1.0
+anneal:                      # [start, end, from, until] (fractions of training)
+  race_shaping: [0.1, 0.0, 0.1, 0.5]
+opponents: [digital, runs/train/f2_weather_league_20261026-170806#0, runs/train/f2_weather_league_20261026-170806#1, runs/train/f2_weather_league_20261026-170806#2]
+ppo:
+  num_envs: 2048
+  num_steps: 64
+  total_timesteps: 300000000
+  lr: 0.0003
+  gamma: 0.999
+  gae_lambda: 0.95
+  update_epochs: 4
+  num_minibatches: 32
+  ent_coef: 0.01
+  ent_coef_final: 0.002
+  hidden: 128
+  stagger_steps: 700
+  num_seeds: 3
+  updates_per_chunk: 10
+  kick_coef: 0.0
+  opp_frac: 0.75             # three quarters of the races against the pool
+  opp_learners: 2            # boats 0-1 learn, boats 2-3 from the pool
+  opp_snapshots: 4
+  opp_snapshot_every: 100
+  opp_mix: true              # each pool boat drawn separately: mixed fleets

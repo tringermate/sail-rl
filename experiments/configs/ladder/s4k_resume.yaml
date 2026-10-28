@@ -1,0 +1,37 @@
+# Kickstarted stage 4, resumed from its update-800 checkpoint (13.1M steps) after the process died at
+# 22:24 on 2026-10-24. The teacher weight was already 0; lr and entropy continue their linear decays.
+name: ladder_s4k_resume
+env: race-solo
+wandb: true
+wandb_project: sailstart
+gif_every: 150
+start_bank:
+  num: 4096
+  policy: fleet
+  sampler: uniform
+  seed: 4321
+env_params:
+  race_legs: 4
+  course_beat_length: 400.0
+  gate_offset: 60.0
+  race_time_cost: 0.0016667
+  race_finish_reward: 1.0
+  race_shaping: 0.1
+  shaping_gamma: 1.0
+ppo:
+  num_envs: 64
+  num_steps: 256
+  total_timesteps: 26892800
+  lr: 0.000202                # 3e-4 x (1 - 800/2450)
+  gamma: 0.999
+  gae_lambda: 0.95
+  update_epochs: 4
+  num_minibatches: 8
+  ent_coef: 0.00739           # 0.01 -> 0.002 at 800/2450 of the way
+  ent_coef_final: 0.002
+  hidden: 128
+  stagger_steps: 700
+  num_seeds: 3
+  updates_per_chunk: 10
+  kick_coef: 0.0
+init_from: runs/train/ladder_s4k_full_kick_20261024-212058

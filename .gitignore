@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Environments
+.venv/
+venv/
+env/
+
+# Tests, coverage, type checkers
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Editors and OS
+.vscode/
+.idea/
+.claude/
+.DS_Store
+Thumbs.db
+
+# Project: training runs, evaluations and pod bundles (large; not published)
+runs/
+# Weights & Biases local logs
+wandb/
+# Results of the earliest runs
+experiments/results/
+# Personal notes
+private/
+# GIFs and videos are outputs, except the figures in the docs
+*.gif
+*.mp4
+!docs/**/*.gif

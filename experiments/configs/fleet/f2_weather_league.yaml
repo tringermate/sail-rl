@@ -1,0 +1,51 @@
+# F2: fleet racing that should reward tactics (decisions 2026-10-26 after F1 sailed in a procession and cut the
+# gate): 4 boats in weather (shifts, puffs; current capped at 6% of the wind) so the sides of the course differ;
+# an opponent pool (half the races against frozen earlier selves and the digital racer); the per-second time cost
+# and progress shaping phased out between 10% and 50% of training, so at the end only finishing and place pay.
+# From the weather racer retrained under the fixed gate rule (queue item :latest=gpu_weather_gate).
+name: f2_weather_league
+env: race-weather
+wandb: true
+wandb_project: sailstart
+gif_every: 150
+start_bank:
+  num: 4096
+  policy: fleet
+  sampler: uniform
+  seed: 4321
+env_params:
+  fleet_size: 4
+  rrs16: true
+  current_max_frac: 0.06     # race committee
+  race_legs: 4
+  course_beat_length: 400.0
+  gate_offset: 60.0
+  race_finish_reward: 1.0
+  race_rank_reward: 2.0      # zero-sum by place: winner +1 ... last -1
+  race_time_cost: 0.0016667
+  race_shaping: 0.1
+  shaping_gamma: 1.0
+anneal:                      # [start, end, from, until] (fractions of training)
+  race_time_cost: [0.0016667, 0.0, 0.1, 0.5]
+  race_shaping: [0.1, 0.0, 0.1, 0.5]
+opponents: [digital]         # fixed agents in the pool, next to the policy's own snapshots
+ppo:
+  num_envs: 2048
+  num_steps: 64
+  total_timesteps: 300000000
+  lr: 0.0003
+  gamma: 0.999
+  gae_lambda: 0.95
+  update_epochs: 4
+  num_minibatches: 32
+  ent_coef: 0.01
+  ent_coef_final: 0.002
+  hidden: 128
+  stagger_steps: 700
+  num_seeds: 3
+  updates_per_chunk: 10
+  kick_coef: 0.0
+  opp_frac: 0.5              # half the envs race the pool ...
+  opp_learners: 2            # ... with boats 0-1 learning, boats 2-3 from the pool
+  opp_snapshots: 4
+  opp_snapshot_every: 100    # ~7% of training

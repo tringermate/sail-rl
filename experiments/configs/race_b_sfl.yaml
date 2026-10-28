@@ -1,0 +1,38 @@
+# Racing, agent B (sfl): agent A + a curriculum over race situations.
+#
+# The question (Phase 3 on a 10x longer task): does training from situations all over the course help?
+# 4096 situations: 75% anywhere on the course (random leg, position, heading, speed; sampled directly,
+# no agent sails them), 25% just after the start as in agent A. This variant: situations chosen by Sampling for Learnability (weight p(1-p): the ones finished sometimes, not always).
+# Same reward, PPO settings and seeds as agent A, for a fair comparison. GIFs sail the full race.
+name: race_b_sfl
+env: race-solo
+wandb: true
+wandb_project: sailstart     # the same W&B project as the start runs
+gif_every: 150               # a GIF of seed 0 racing, every 150 updates
+start_bank:
+  num: 4096
+  policy: fleet              # the bundled fleet start policy sails the start (the 25% start entries)
+  situations: anywhere       # 75% situations anywhere on the course
+  start_fraction: 0.25
+  sampler: sfl
+  seed: 4321
+env_params:
+  race_time_cost: 0.0016667  # 1/600 per second
+  race_finish_reward: 1.0
+  race_shaping: 0.1
+  shaping_gamma: 0.997       # must equal ppo.gamma
+ppo:
+  num_envs: 64
+  num_steps: 256             # batch 16,384 steps per update and seed
+  total_timesteps: 100000000 # per seed
+  lr: 0.0003
+  gamma: 0.997               # horizon ~ 1/(1-gamma) = 330 s: a beat, not just a few tacks
+  gae_lambda: 0.95
+  update_epochs: 4
+  num_minibatches: 8
+  ent_coef: 0.01
+  ent_coef_final: 0.002
+  hidden: 128                # a longer task than the start: 2 x 128 units
+  stagger_steps: 700         # spread the episodes so they don't all end on the same update
+  num_seeds: 3
+  updates_per_chunk: 10

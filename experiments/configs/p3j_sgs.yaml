@@ -1,0 +1,48 @@
+# Phase 3b, joint curriculum over (situation, rule level), sampler: sgs. 1024 situations x 6 rule
+# levels (easy -> full rules, as the staged rules); the boat observes the episode's rules; the sampler
+# learns from success under the episode's own rules; evaluation at full rules.
+# Full rules from the start (no staged rules): on the line at the gun (0-3 m), cross within 3 s at
+# >= 90% speed, starboard, OCS penalty, height bonus with 10 s tail. Each episode resets to one of
+# 4096 fixed starting situations (5-60 s to the gun, 2 m below the line up to beyond reach), chosen by
+# the sampler below. Success signal for the sampler: good_start_on_line.
+name: p3j_sgs
+env: solo_start
+wandb: true
+gif_every: 100         # updates
+env_params:
+  port_penalty: 1.0
+  upwind_bonus: 1.0
+  efficiency_tail_seconds: 10.0
+  gun_distance_max: 3.0
+  per_episode_rules: true
+  observe_rules: true
+curriculum:
+  method: sgs
+  num_configs: 6144     # 1024 situations x 6 rule levels
+  num_levels: 6
+  history: 100
+  target: 0.5
+  kappa: 1.0
+  temperature: 2.0
+  eps: 1.0e-4
+  success_key: success   # success under the episode's own rules
+ppo:
+  num_envs: 512
+  num_steps: 32
+  total_timesteps: 20000000
+  lr: 3.0e-4
+  anneal_lr: true
+  update_epochs: 4
+  num_minibatches: 4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_eps: 0.2
+  ent_coef: 0.01
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  normalize_advantages: true
+  clip_value_loss: true
+  hidden: 64
+  num_seeds: 5
+  updates_per_chunk: 10
+  stagger_steps: 70

@@ -1,0 +1,41 @@
+# Racing ladder, Stage 4 kickstarted: the full race, from stage 3, with the digital racer as a teacher.
+# Identical to s4_full.yaml (the pure-RL control) except for teacher / kick_coef / kick_until: the loss
+# gets kick * cross-entropy(digital racer action | the state the student is in), kick decaying 1 -> 0 over
+# the first 30% of training; after that it is plain PPO, free to improve on the teacher.
+# Needs sail_env with kickstarting (branch kickstart).
+name: ladder_s4k_full_kick
+env: race-solo
+wandb: true
+wandb_project: sailstart
+gif_every: 150
+teacher: digital            # kickstarting teacher (any sail_env load_agent spec)
+start_bank:
+  num: 4096
+  policy: fleet              # the bundled fleet start policy sails the start
+  sampler: uniform
+  seed: 4321
+env_params:
+  race_legs: 4
+  course_beat_length: 400.0
+  gate_offset: 60.0
+  race_time_cost: 0.0016667  # 1/600 per second until finished
+  race_finish_reward: 1.0
+  race_shaping: 0.1          # x (Phi' - Phi), Phi = -distance to sail by the rounding route / 100 m
+  shaping_gamma: 1.0         # undiscounted shaping: a parked boat gets exactly the time cost
+ppo:
+  num_envs: 64
+  num_steps: 256
+  total_timesteps: 40000000
+  lr: 0.0003
+  gamma: 0.999               # the finish is still worth ~half after a full race (0.997: 12%)
+  gae_lambda: 0.95
+  update_epochs: 4
+  num_minibatches: 8
+  ent_coef: 0.01
+  ent_coef_final: 0.002
+  hidden: 128
+  stagger_steps: 700
+  num_seeds: 3
+  updates_per_chunk: 10
+  kick_coef: 1.0             # weight of the imitation loss at the start ...
+  kick_until: 0.3            # ... decaying linearly to 0 at 30% of training (12M steps)

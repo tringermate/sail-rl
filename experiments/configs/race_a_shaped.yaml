@@ -1,0 +1,43 @@
+# Racing, agent A: shaped PPO on the solo race (no other boats, no weather).
+#
+# The question: can plain PPO with a sensible reward learn to sail the course? Every episode starts just
+# after the start (sailed by the bundled fleet start policy, sail_env/pretrained/fleet), so A learns only
+# the racing: beat to the windward mark (leave it to port), run through the gate, beat, run to the finish.
+#
+# Reward (per boat):
+#   -1/600 per second until finished   (a 700 s race costs ~ -1.2; finishing faster pays)
+#   +1 for finishing
+#   + 0.1 x (gamma Phi(s') - Phi(s)),  Phi = -distance still to sail / 100 m   (potential-based shaping:
+#     credits progress in the second it is made, leaves the best policy unchanged; shaping_gamma = gamma)
+# Reference: the digital racer finishes every solo race in 692 +- 15 s (sail_env README baselines).
+# "Competent": finishes >= 95% of races, within ~5% of that time.
+name: race_a_shaped
+env: race-solo
+wandb: true
+wandb_project: sailstart     # the same W&B project as the start runs
+gif_every: 150               # a GIF of seed 0 racing, every 150 updates
+start_bank:
+  num: 4096                  # race states just after the start
+  policy: fleet              # the bundled fleet start policy sails the start
+  sampler: uniform           # agent B will choose these situations with a curriculum instead
+  seed: 4321
+env_params:
+  race_time_cost: 0.0016667  # 1/600 per second
+  race_finish_reward: 1.0
+  race_shaping: 0.1
+  shaping_gamma: 0.997       # must equal ppo.gamma
+ppo:
+  num_envs: 64
+  num_steps: 256             # batch 16,384 steps per update and seed
+  total_timesteps: 100000000 # per seed
+  lr: 0.0003
+  gamma: 0.997               # horizon ~ 1/(1-gamma) = 330 s: a beat, not just a few tacks
+  gae_lambda: 0.95
+  update_epochs: 4
+  num_minibatches: 8
+  ent_coef: 0.01
+  ent_coef_final: 0.002
+  hidden: 128                # a longer task than the start: 2 x 128 units
+  stagger_steps: 700         # spread the episodes so they don't all end on the same update
+  num_seeds: 3
+  updates_per_chunk: 10

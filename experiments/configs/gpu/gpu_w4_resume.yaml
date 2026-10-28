@@ -1,0 +1,39 @@
+# W4 (W1 retrained with the current capped at 6% of the wind), resumed on a GPU pod from its update-800
+# checkpoint after the laptop session restart stopped it. Same 64 envs as on the CPU, so it is the same
+# experiment; lr and entropy continue their linear decays (Adam state restarts).
+name: gpu_w4_resume
+env: race-solo-weather
+init_from: runs/train/w4_capped_from_w1_20261026-080754
+wandb: true
+wandb_project: sailstart
+gif_every: 150
+start_bank:
+  num: 4096
+  policy: fleet
+  sampler: uniform
+  seed: 4321
+env_params:
+  race_legs: 4
+  course_beat_length: 400.0
+  gate_offset: 60.0
+  race_time_cost: 0.0016667
+  race_finish_reward: 1.0
+  race_shaping: 0.1
+  shaping_gamma: 1.0
+  current_max_frac: 0.06     # race committee
+ppo:
+  num_envs: 64
+  num_steps: 256
+  total_timesteps: 16892800   # 30M - 13,107,200 done (update 800 of 1840)
+  lr: 0.0000565              # 1e-4 x (1 - 800/1840)
+  gamma: 0.999
+  gae_lambda: 0.95
+  update_epochs: 4
+  num_minibatches: 8
+  ent_coef: 0.00313          # 0.004 -> 0.002, 800/1840 of the way
+  ent_coef_final: 0.002
+  hidden: 128
+  stagger_steps: 700
+  num_seeds: 3
+  updates_per_chunk: 10
+  kick_coef: 0.0

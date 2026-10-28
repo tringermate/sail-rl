@@ -1,0 +1,24 @@
+[project]
+name = "sail-rl"
+version = "0.2.0"
+description = "Research log for J/70 racing with RL: experiments, configs and write-ups on top of the sail_env simulator"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    # The simulator, PPO, curricula and agents live in sail_env (the single source of truth);
+    # this repository holds only experiments, configs, analysis scripts and results.
+    "sail_env",
+]
+
+[project.optional-dependencies]
+# Live training dashboards (optional): uv sync --extra wandb
+wandb = ["wandb>=0.18"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.uv]
+package = false  # nothing to build here: experiments/ are scripts
+
+[tool.uv.sources]
+sail_env = { path = "../sail-env", editable = true }  # clone sail_env next to this repository
