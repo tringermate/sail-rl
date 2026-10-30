@@ -1,0 +1,59 @@
+# M2: as M1 with Success-Guided Sampling (paper defaults, as p3j_sgs): more of the setups where boat 0 wins
+# about half the time. See m1_uniform.yaml for everything else.
+name: m2_sgs
+script: experiments.match.train
+env: race
+init_from: racer              # the bundled racer (sail-env pretrained); match inputs start at weight 0
+wandb: true
+wandb_project: sailstart
+checkpoint_every: 100
+env_params:
+  fleet_size: 2
+  rrs16: true
+  rrs13_tack_only: true
+  rrs18_opposite_tacks: true
+  contact_cost: 0.25          # as F3
+  contact_cost_row: 0.1
+  race_finish_reward: 0.0     # the outcome is paid by the match env
+  race_rank_reward: 0.0
+  race_shaping: 0.0
+  race_time_cost: 0.0
+bank:
+  per_situation: 512
+  full_races: 1024
+  start_checkpoint: 50.0      # m upwind of the line after a legal start: the start situations' target
+  seed: 2024
+match:
+  block_factor: 2.0
+  race_factor: 2.0            # race/race: undecided after 2 x the longer undisturbed time -> distance decides
+  outcome_reward: 1.0
+  foul_cost: 0.5
+  shaping: 0.1
+  full_race_frac: 0.05        # of episodes; full races are ~10x longer, so ~1/3 of the steps
+anneal:                       # [start, end, from, until] (fractions of training)
+  shaping: [0.1, 0.0, 0.1, 0.5]
+curriculum:
+  method: sgs
+  target: 0.5
+  kappa: 1.0
+  temperature: 2.0
+  history: 100
+ppo:
+  num_envs: 2048
+  num_steps: 64
+  total_timesteps: 200000000
+  lr: 0.0003
+  gamma: 0.995
+  gae_lambda: 0.95
+  update_epochs: 4
+  num_minibatches: 32
+  ent_coef: 0.01
+  ent_coef_final: 0.002
+  hidden: 128
+  stagger_steps: 300
+  num_seeds: 3
+  updates_per_chunk: 10
+  opp_frac: 0.5               # half the envs: boat 1 is a frozen past self (against cycling in self-play)
+  opp_learners: 1
+  opp_snapshots: 4
+  opp_snapshot_every: 100

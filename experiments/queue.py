@@ -82,7 +82,8 @@ def main():
         note(f"{name}: training {cfg['env']}, {cfg['ppo']['total_timesteps']:,} steps per seed, "
              f"from {cfg.get('init_from', 'scratch')}" + (f", teacher {cfg['teacher']}" if cfg.get("teacher") else ""))
         with (Path("runs") / f"{name}.log").open("w", encoding="utf-8") as log:
-            proc = subprocess.run([sys.executable, "-m", "sail_env.train.run", str(tmp)], stdout=log,
+            # A config may name its own training module (`script:`, e.g. experiments.match.train).
+            proc = subprocess.run([sys.executable, "-m", cfg.get("script", "sail_env.train.run"), str(tmp)], stdout=log,
                                   stderr=subprocess.STDOUT)
         text = (Path("runs") / f"{name}.log").read_text(encoding="utf-8", errors="replace")
         found = re.search(r"->\s+(runs\S+)", text)
@@ -92,7 +93,9 @@ def main():
                  + (f" (checkpoint in {run_dir})" if run_dir else ""))
             continue
         note(f"{name}: finished -> {run_dir}")
-        diag = Path("runs") / "diag" / f"{run_dir.name}.png"
+        if cfg.get("script"):  # the race diagnosis expects a plain race policy
+            continue
+        diag =Path("runs") / "diag" / f"{run_dir.name}.png"
         d = subprocess.run([sys.executable, "experiments/diagnose_race.py", str(run_dir), "--steps", "1800",
                             "--out", str(diag)], capture_output=True, text=True, encoding="utf-8", errors="replace")
         summary = [ln for ln in d.stdout.splitlines() if "finished" in ln]
